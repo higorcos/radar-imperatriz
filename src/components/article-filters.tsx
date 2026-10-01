@@ -23,7 +23,7 @@ export function ArticleFilters({
   extra?: React.ReactNode;
 }) {
   return (
-    <form action={action} className="grid gap-3 rounded-xl border border-border bg-surface p-3 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_auto]">
+    <form action={action} className="grid gap-3 rounded-xl border border-border bg-surface p-3 sm:grid-cols-2 lg:grid-cols-4">
       <div>
         <label htmlFor="f-q" className={labelClass}>Assunto</label>
         <input id="f-q" name="q" defaultValue={values.q} placeholder="Ex.: vacinação, BR-010" className={inputClass} />

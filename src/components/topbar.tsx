@@ -71,7 +71,7 @@ export function RefreshButton({
 export function Topbar() {
   const params = useSearchParams();
   return (
-    <div className="sticky top-0 z-20 border-b border-border bg-bg/85 backdrop-blur lg:top-0">
+    <div className="sticky top-14 z-20 border-b border-border bg-bg/85 backdrop-blur lg:top-0">
       <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 py-3 sm:px-6 lg:px-8">
         <form action="/busca" role="search" className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />

@@ -48,7 +48,8 @@ export function clusterArticles<T extends RankableArticle>(items: T[]): Cluster<
   const clusters: { items: T[]; tokens: Set<string>[] }[] = [];
   for (const item of sorted) {
     const tokens = significantTokens(item.title);
-    const target = clusters.find((c) => c.tokens.some((t) => similar(t, tokens)));
+    // Compara só com a matéria que abriu o grupo, evitando encadear assuntos diferentes.
+    const target = clusters.find((c) => similar(c.tokens[0], tokens));
     if (target) {
       target.items.push(item);
       target.tokens.push(tokens);

@@ -54,7 +54,7 @@ export const CATEGORIES: Record<CategoryKey, CategoryDef> = {
   },
   infraestrutura: {
     label: "Infraestrutura",
-    keywords: ["obra", "asfalt", "pavimenta", "ponte", "saneamento", "esgoto", "agua tratada", "falta de agua", "caema", "energia eletrica", "falta de energia", "equatorial", "drenagem", "buraco", "recapeamento", "iluminacao publica"],
+    keywords: ["obras", "obra publica", "asfalt", "pavimenta", "ponte", "saneamento", "esgoto", "agua tratada", "falta de agua", "caema", "energia eletrica", "falta de energia", "equatorial", "drenagem", "buraco", "recapeamento", "iluminacao publica"],
     publicInterest: true,
   },
   mobilidade: {

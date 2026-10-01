@@ -51,7 +51,7 @@ export function Sidebar() {
       </aside>
 
       {/* Mobile */}
-      <div className="sticky top-0 z-30 flex items-center justify-between bg-navy px-4 py-3 lg:hidden">
+      <div className="sticky top-0 z-30 flex h-14 items-center justify-between bg-navy px-4 lg:hidden">
         <Logo compact />
         <span className="font-serif font-bold text-on-navy">Radar Imperatriz</span>
         <button
