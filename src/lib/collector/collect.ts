@@ -31,6 +31,14 @@ export interface CollectSummary {
 
 const CONCURRENCY = 4;
 
+// Portais estaduais também publicam notícias nacionais/internacionais; a seção vem na URL.
+const NATIONAL_SECTION = /\/(brasil|mundo|internacional|nacional|politica-nacional)\//i;
+
+export function scopeFor(sourceScope: SourceRow["scope"], url: string): SourceRow["scope"] {
+  if (sourceScope === "estadual" && NATIONAL_SECTION.test(new URL(url).pathname)) return "nacional";
+  return sourceScope;
+}
+
 /**
  * Coleta os feeds RSS habilitados. Por padrão consulta só as fontes "vencidas"
  * (última consulta mais antiga que a frequência configurada); `force` consulta todas.
@@ -95,7 +103,7 @@ async function collectOne(sql: postgres.Sql, source: SourceRow): Promise<SourceR
         image_url: source.allow_images ? item.imageUrl : null,
         published_at: item.publishedAt,
         category,
-        scope: local ? "local" : source.scope,
+        scope: local ? "local" : scopeFor(source.scope, item.url),
         content_kind: detectContentKind(item.url, item.title, item.categories),
         has_statement: hasStatement(item.title),
         mentions_imperatriz: local,

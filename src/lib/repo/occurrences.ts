@@ -82,3 +82,13 @@ export async function countOpenOccurrences(): Promise<number> {
   const [r] = await sql<{ n: number }[]>`select count(*)::int as n from occurrences where status in ('recebida','em_apuracao')`;
   return r.n;
 }
+
+export async function searchOccurrences(q: string, limit = 20): Promise<Occurrence[]> {
+  const sql = db();
+  const like = `%${q}%`;
+  return sql<Occurrence[]>`
+    select * from occurrences
+    where description ilike ${like} or location ilike ${like} or notes ilike ${like}
+    order by created_at desc limit ${limit}
+  `;
+}

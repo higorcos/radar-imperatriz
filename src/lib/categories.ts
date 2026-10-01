@@ -59,7 +59,7 @@ export const CATEGORIES: Record<CategoryKey, CategoryDef> = {
   },
   mobilidade: {
     label: "Mobilidade urbana",
-    keywords: ["transito", "onibus", "transporte publico", "mobilidade", "br 010", "rodovia", "acidente de transito", "semaforo", "ciclovia", "aeroporto", "voo", "detran", "interdic"],
+    keywords: ["transito", "onibus", "transporte publico", "mobilidade", "br 010", "rodovia", "acidente de transito", "semaforo", "ciclovia", "aeroporto", "detran", "interdic", "interdit"],
     publicInterest: true,
   },
   economia: {
@@ -174,7 +174,7 @@ export function mentionsImperatriz(text: string): boolean {
 /** Distingue notícia, opinião e análise a partir de sinais explícitos da fonte (URL, título, categoria). */
 export function detectContentKind(url: string, title: string, feedCategories: string[] = []): "noticia" | "opiniao" | "analise" {
   const hay = normalize(`${url} ${title} ${feedCategories.join(" ")}`);
-  if (/\b(opiniao|colunistas?|coluna|editorial|artigo de opiniao|tendencias debates|ponto de vista)\b/.test(hay)) return "opiniao";
+  if (/\b(opiniao|colunistas?|colunas?|editorial|artigo de opiniao|tendencias debates|ponto de vista)\b/.test(hay)) return "opiniao";
   if (/\b(analise|analysis)\b/.test(hay)) return "analise";
   return "noticia";
 }
@@ -185,7 +185,7 @@ export function hasStatement(title: string): boolean {
   return /["“”]/.test(title) || /\b(diz|dizem|afirma|afirmam|declara|defende|critica|nega|acusa|promete|alega|avalia|aponta)\b/.test(n);
 }
 
-const UTILITY_TERMS = ["alerta", "interdic", "falta de agua", "falta de energia", "desabastecimento", "vacinac", "prazo", "inscric", "ponto facultativo", "feriado", "mudanca no transito", "defesa civil", "aviso", "suspens", "horario", "campanha", "mutirao", "gratuito", "gratuita", "recadastramento"];
+const UTILITY_TERMS = ["alerta", "interdic", "interdit", "falta de agua", "falta de energia", "desabastecimento", "vacinac", "prazo", "inscric", "ponto facultativo", "feriado", "mudanca no transito", "defesa civil", "aviso", "suspens", "horario", "campanha", "mutirao", "gratuito", "gratuita", "recadastramento"];
 
 /** Indica potencial de utilidade pública (alertas, prazos, serviços). */
 export function isUtilityAlert(title: string, excerpt: string | null): boolean {

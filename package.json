@@ -12,7 +12,8 @@
     "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "db:seed": "tsx --env-file=.env.local scripts/seed.ts",
     "collect": "tsx --env-file=.env.local scripts/collect.ts",
-    "setup": "npm run db:migrate && npm run db:seed"
+    "setup": "npm run db:migrate && npm run db:seed",
+    "reclassify": "tsx --env-file=.env.local scripts/reclassify.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",

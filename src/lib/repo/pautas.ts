@@ -77,3 +77,19 @@ export async function deletePauta(id: string) {
   const sql = db();
   await sql`delete from pautas where id = ${id}`;
 }
+
+export async function countPautasInProgress(): Promise<number> {
+  const sql = db();
+  const [r] = await sql<{ n: number }[]>`
+    select count(*)::int as n from pautas where status in ('em_apuracao','em_producao','em_revisao','pronto')
+  `;
+  return r.n;
+}
+
+export async function searchPautas(q: string, limit = 20): Promise<Pauta[]> {
+  const sql = db();
+  const like = `%${q}%`;
+  return sql<Pauta[]>`
+    select * from pautas where title ilike ${like} or summary ilike ${like} order by created_at desc limit ${limit}
+  `;
+}

@@ -41,3 +41,8 @@ export function localDateKey(d: Date | string): string {
 export function fromLocalInput(date: string, time = "09:00"): Date {
   return new Date(`${date}T${time}:00-03:00`);
 }
+
+/** Horas desde a data (para avisos de defasagem). */
+export function hoursSince(d: Date | string, now = Date.now()): number {
+  return (now - new Date(d).getTime()) / 3_600_000;
+}
