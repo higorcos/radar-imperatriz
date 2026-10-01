@@ -10,6 +10,7 @@ export interface Article extends RankableArticle {
   image_url: string | null;
   scope: Scope;
   has_statement: boolean;
+  published_precision: "datetime" | "date";
   saved: boolean;
 }
 
@@ -29,7 +30,7 @@ export async function listArticles(f: ArticleFilters): Promise<Article[]> {
   const limit = Math.min(f.limit ?? 30, 200);
   return sql<Article[]>`
     select a.id, a.title, a.excerpt, a.url, a.image_url, a.published_at, a.collected_at, a.category, a.scope,
-           a.content_kind, a.has_statement, a.mentions_imperatriz,
+           a.content_kind, a.has_statement, a.mentions_imperatriz, a.published_precision,
            s.id as source_id, s.name as source_name, s.type as source_type,
            exists (select 1 from saved_items si where si.article_id = a.id) as saved
     from articles a
@@ -62,7 +63,7 @@ export async function getArticlesByIds(ids: string[]): Promise<Article[]> {
   const sql = db();
   return sql<Article[]>`
     select a.id, a.title, a.excerpt, a.url, a.image_url, a.published_at, a.collected_at, a.category, a.scope,
-           a.content_kind, a.has_statement, a.mentions_imperatriz,
+           a.content_kind, a.has_statement, a.mentions_imperatriz, a.published_precision,
            s.id as source_id, s.name as source_name, s.type as source_type,
            exists (select 1 from saved_items si where si.article_id = a.id) as saved
     from articles a join sources s on s.id = a.source_id

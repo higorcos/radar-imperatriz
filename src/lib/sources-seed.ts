@@ -1,7 +1,7 @@
 /**
  * Fontes iniciais. Todos os feeds RSS abaixo foram testados em 01/10/2026.
- * Fontes sem RSS público ficam como "sem_integracao" (aparecem na página Fontes como referência
- * de consulta manual) — não fazemos raspagem de HTML.
+ * Sites institucionais sem RSS podem usar "pagina_html": lemos só título, link e data da página de
+ * listagem de notícias, nunca o conteúdo das matérias. Os demais ficam como "sem_integracao".
  */
 export interface SourceSeed {
   name: string;
@@ -11,7 +11,9 @@ export interface SourceSeed {
   scope: "local" | "estadual" | "nacional";
   region: string;
   categories: string[];
-  method: "rss" | "manual" | "sem_integracao";
+  method: "rss" | "pagina_html" | "manual" | "sem_integracao";
+  /** Só para "pagina_html": regex que identifica links de notícia na listagem. */
+  link_pattern?: string;
   frequency_minutes: number;
   enabled: boolean;
   allow_images: boolean;
@@ -53,19 +55,19 @@ export const SOURCE_SEEDS: SourceSeed[] = [
   },
   {
     name: "Prefeitura de Imperatriz",
-    site_url: "https://www.imperatriz.ma.gov.br/",
-    feed_url: null,
+    site_url: "https://imperatriz.ma.gov.br/",
+    feed_url: "https://imperatriz.ma.gov.br/noticias/",
     type: "institucional", scope: "local", region: "Imperatriz (MA)", categories: ["servicos_publicos"],
-    method: "sem_integracao", frequency_minutes: 1440, enabled: true, allow_images: false,
-    notes: "Site sem RSS público (teste em 01/10/2026). Consulta manual.",
+    method: "pagina_html", link_pattern: "/noticias/[a-z0-9-]+\\.html$", frequency_minutes: 120, enabled: true, allow_images: false,
+    notes: "Sem RSS. Coleta da página de listagem de notícias (título, link e data). O site informa só o dia da publicação.",
   },
   {
     name: "Câmara Municipal de Imperatriz",
-    site_url: "https://www.imperatriz.ma.leg.br/",
-    feed_url: null,
+    site_url: "https://www.camaraimperatriz.ma.gov.br/",
+    feed_url: "https://www.camaraimperatriz.ma.gov.br/noticias",
     type: "institucional", scope: "local", region: "Imperatriz (MA)", categories: ["politica"],
-    method: "sem_integracao", frequency_minutes: 1440, enabled: true, allow_images: false,
-    notes: "Sem RSS acessível (teste em 01/10/2026). Consulta manual.",
+    method: "pagina_html", link_pattern: "/noticia/[a-z0-9-]+$", frequency_minutes: 120, enabled: true, allow_images: false,
+    notes: "Sem RSS. Coleta da página de listagem de notícias (título, link e data). robots.txt permite acesso.",
   },
   {
     name: "Governo do Maranhão",

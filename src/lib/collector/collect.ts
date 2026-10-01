@@ -1,12 +1,15 @@
 import type postgres from "postgres";
 import { classify, detectContentKind, hasStatement, isCategoryKey, mentionsImperatriz } from "../categories";
 import { decodeBody, parseFeed } from "./feed-parser";
+import { parseListing } from "./listing-parser";
 import { safeFetch } from "./safe-fetch";
 
 interface SourceRow {
   id: string;
   name: string;
   feed_url: string;
+  method: "rss" | "pagina_html";
+  link_pattern: string | null;
   scope: "local" | "estadual" | "nacional";
   categories: string[];
   allow_images: boolean;
@@ -50,9 +53,9 @@ export async function collectFeeds(
 ): Promise<CollectSummary> {
   const startedAt = new Date().toISOString();
   const sources = await sql<SourceRow[]>`
-    select id, name, feed_url, scope, categories, allow_images, etag, last_modified
+    select id, name, feed_url, method, link_pattern, scope, categories, allow_images, etag, last_modified
     from sources
-    where method = 'rss' and feed_url is not null
+    where method in ('rss', 'pagina_html') and feed_url is not null
       and ${opts.sourceId ? sql`id = ${opts.sourceId}` : sql`enabled`}
       and ${
         opts.force || opts.sourceId
@@ -88,7 +91,11 @@ async function collectOne(sql: postgres.Sql, source: SourceRow): Promise<SourceR
       return { sourceId: source.id, name: source.name, status: "nao_modificado", found: 0, inserted: 0 };
     }
 
-    const items = parseFeed(decodeBody(res.body, res.contentType));
+    const body = decodeBody(res.body, res.contentType);
+    const items =
+      source.method === "pagina_html"
+        ? parseListing(body, source.feed_url, source.link_pattern ?? "$^")
+        : parseFeed(body);
     const defaultCategory = source.categories.find(isCategoryKey);
     const rows = items.map((item) => {
       const fullText = `${item.title} ${item.excerpt}`;
@@ -102,6 +109,7 @@ async function collectOne(sql: postgres.Sql, source: SourceRow): Promise<SourceR
         url: item.url,
         image_url: source.allow_images ? item.imageUrl : null,
         published_at: item.publishedAt,
+        published_precision: item.datePrecision ?? "datetime",
         category,
         scope: local ? "local" : scopeFor(source.scope, item.url),
         content_kind: detectContentKind(item.url, item.title, item.categories),

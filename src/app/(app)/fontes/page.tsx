@@ -4,7 +4,7 @@ import { ActionButton } from "@/components/action-button";
 import { Badge, Card, Notice, PageHeader, SectionHeader } from "@/components/ui";
 import { CATEGORIES, categoryLabel, type CategoryKey } from "@/lib/categories";
 import { formatDateTime, relativeTime } from "@/lib/format";
-import { listSources, recentRuns, type SourceHealth } from "@/lib/repo/sources";
+import { isAutomatic, listSources, recentRuns, type SourceHealth } from "@/lib/repo/sources";
 import { deleteSourceAction, testSourceAction, toggleSourceAction } from "./actions";
 import { SourceForm } from "./source-form";
 
@@ -27,7 +27,12 @@ const TYPE_LABEL: Record<string, string> = {
   relato_usuario: "Relato de usuário",
   agregador: "Agregador",
 };
-const METHOD_LABEL: Record<string, string> = { rss: "RSS automático", manual: "Consulta manual", sem_integracao: "Sem integração" };
+const METHOD_LABEL: Record<string, string> = {
+  rss: "RSS automático",
+  pagina_html: "Página de notícias (HTML)",
+  manual: "Consulta manual",
+  sem_integracao: "Sem integração",
+};
 const SCOPE_LABEL: Record<string, string> = { local: "Imperatriz", estadual: "Maranhão", nacional: "Nacional" };
 
 export default async function FontesPage() {
@@ -37,7 +42,7 @@ export default async function FontesPage() {
 
   return (
     <>
-      <PageHeader title="Fontes de Informação" description="Fontes monitoradas, como são coletadas e se estão funcionando. A coleta usa apenas RSS público — sem raspagem de páginas e sem contornar bloqueios." />
+      <PageHeader title="Fontes de Informação" description="Fontes monitoradas, como são coletadas e se estão funcionando. A coleta usa RSS público e, para sites institucionais sem RSS, só título, link e data da página de listagem — sem abrir as matérias e sem contornar bloqueios." />
       {problems.length > 0 && (
         <Notice tone="warn" title={`${problems.length} fonte(s) precisam de atenção`} className="mb-6">
           {problems.map((p) => `${p.name} (${HEALTH[p.health].label.toLowerCase()})`).join(" · ")}
@@ -79,7 +84,7 @@ export default async function FontesPage() {
                 </td>
                 <td className="px-3 py-3 text-xs text-muted">
                   {METHOD_LABEL[s.method]}
-                  {s.method === "rss" && <p>a cada {s.frequency_minutes} min</p>}
+                  {isAutomatic(s.method) && <p>a cada {s.frequency_minutes} min</p>}
                 </td>
                 <td className="px-3 py-3">
                   <Badge tone={HEALTH[s.health].tone}>{HEALTH[s.health].label}</Badge>
@@ -95,7 +100,7 @@ export default async function FontesPage() {
                 </td>
                 <td className="px-3 py-3">
                   <div className="flex justify-end gap-1">
-                    {s.method === "rss" && s.feed_url && (
+                    {isAutomatic(s.method) && s.feed_url && (
                       <ActionButton action={testSourceAction.bind(null, s.id)} label="Testar" pendingLabel="Consultando…" icon={<Play className="size-4" aria-hidden />} variant="ghost" size="sm" />
                     )}
                     <ActionButton action={toggleSourceAction.bind(null, s.id)} label={s.enabled ? "Desativar" : "Ativar"} icon={<Power className="size-4" aria-hidden />} variant="ghost" size="sm" />

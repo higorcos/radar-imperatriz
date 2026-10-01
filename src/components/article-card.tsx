@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink, Lightbulb, Quote } from "lucide-react";
 import { categoryLabel } from "@/lib/categories";
-import { formatDateTime, relativeTime } from "@/lib/format";
+import { formatDate, formatDateTime, relativeTime } from "@/lib/format";
 import type { Article } from "@/lib/repo/articles";
 import { SaveButton } from "./save-button";
 import { Badge, buttonClass, cx } from "./ui";
@@ -15,12 +15,14 @@ const SOURCE_TYPE_LABEL: Record<string, string> = {
   agregador: "Agregador",
 };
 
-export function ArticleMeta({ article }: { article: Pick<Article, "published_at" | "collected_at" | "source_name"> }) {
+export function ArticleMeta({ article }: { article: Pick<Article, "published_at" | "collected_at" | "source_name" | "published_precision"> }) {
   return (
     <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted">
       <span className="font-medium text-text">{article.source_name}</span>
       <span aria-hidden>·</span>
-      {article.published_at ? (
+      {article.published_at && article.published_precision === "date" ? (
+        <span title="A fonte informa só o dia, sem horário">publicado em {formatDate(article.published_at)}</span>
+      ) : article.published_at ? (
         <time dateTime={new Date(article.published_at).toISOString()} title={`Publicado em ${formatDateTime(article.published_at)}`}>
           {relativeTime(article.published_at)}
         </time>

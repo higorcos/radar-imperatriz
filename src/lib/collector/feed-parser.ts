@@ -7,6 +7,8 @@ export interface FeedItem {
   url: string;
   excerpt: string;
   publishedAt: Date | null;
+  /** "date" quando a fonte informa só o dia, sem horário. */
+  datePrecision?: "datetime" | "date";
   categories: string[];
   imageUrl: string | null;
 }

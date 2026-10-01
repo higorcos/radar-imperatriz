@@ -13,6 +13,7 @@ export interface Source {
   region: string;
   categories: string[];
   method: string;
+  link_pattern: string | null;
   frequency_minutes: number;
   enabled: boolean;
   allow_images: boolean;
@@ -30,10 +31,12 @@ export interface SourceWithHealth extends Source {
   health: SourceHealth;
 }
 
+export const isAutomatic = (method: string) => method === "rss" || method === "pagina_html";
+
 /** Estado da integração, derivado de dados reais de coleta. */
 export function sourceHealth(s: Source, now = Date.now()): SourceHealth {
   if (!s.enabled) return "desativada";
-  if (s.method !== "rss" || !s.feed_url) return "sem_integracao";
+  if (!isAutomatic(s.method) || !s.feed_url) return "sem_integracao";
   if (!s.last_checked_at) return "nunca_consultada";
   if (s.consecutive_failures >= 3) return "falhando";
   if (s.consecutive_failures >= 1) return "instavel";
@@ -66,11 +69,11 @@ export async function collectionStatus(): Promise<CollectionStatus> {
   const sql = db();
   const [agg] = await sql<{ last: Date | null; active: number }[]>`
     select max(last_success_at) as last, count(*)::int as active
-    from sources where enabled and method = 'rss' and feed_url is not null
+    from sources where enabled and method in ('rss', 'pagina_html') and feed_url is not null
   `;
   const failing = await sql<{ id: string; name: string; error: string | null }[]>`
     select id, name, last_error as error from sources
-    where enabled and method = 'rss' and consecutive_failures >= 1 order by consecutive_failures desc
+    where enabled and method in ('rss', 'pagina_html') and consecutive_failures >= 1 order by consecutive_failures desc
   `;
   return { lastSuccessAt: agg.last, failing, activeFeeds: agg.active };
 }

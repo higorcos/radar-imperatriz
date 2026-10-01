@@ -27,7 +27,7 @@ export function SourceForm({ categories }: { categories: [string, string][] }) {
         <input id="src-site" name="site_url" type="url" required className={inputClass} placeholder="https://" />
       </div>
       <div>
-        <label htmlFor="src-feed" className={labelClass}>Feed RSS/Atom</label>
+        <label htmlFor="src-feed" className={labelClass}>Feed RSS/Atom ou página de notícias</label>
         <input id="src-feed" name="feed_url" type="url" className={inputClass} placeholder="https://…/feed" />
       </div>
       <div>
@@ -59,6 +59,7 @@ export function SourceForm({ categories }: { categories: [string, string][] }) {
           <label htmlFor="src-method" className={labelClass}>Método de coleta</label>
           <select id="src-method" name="method" defaultValue="rss" className={inputClass}>
             <option value="rss">RSS automático</option>
+            <option value="pagina_html">Página de notícias (HTML)</option>
             <option value="manual">Consulta manual</option>
             <option value="sem_integracao">Sem integração</option>
           </select>
@@ -78,7 +79,11 @@ export function SourceForm({ categories }: { categories: [string, string][] }) {
           ))}
         </div>
       </fieldset>
-      <div className="sm:col-span-2">
+      <div>
+        <label htmlFor="src-pattern" className={labelClass}>Padrão do link de notícia (só para página HTML)</label>
+        <input id="src-pattern" name="link_pattern" maxLength={200} className={inputClass} placeholder="/noticia/" />
+      </div>
+      <div className="sm:col-span-2 lg:col-span-1">
         <label htmlFor="src-notes" className={labelClass}>Observações (licença, condições de uso)</label>
         <input id="src-notes" name="notes" maxLength={1000} className={inputClass} />
       </div>

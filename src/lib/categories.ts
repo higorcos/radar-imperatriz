@@ -34,7 +34,7 @@ interface CategoryDef {
 export const CATEGORIES: Record<CategoryKey, CategoryDef> = {
   politica: {
     label: "Política",
-    keywords: ["eleic", "eleitor", "candidat", "prefeit", "vereador", "deputad", "senador", "governador", "presidente lula", "congresso", "camara municipal", "partido", "ministro", "planalto", "votacao", "urna", "tse", "tre ma", "campanha eleitoral", "assembleia legislativa"],
+    keywords: ["eleic", "eleitor", "candidat", "prefeito", "prefeita ", "vereador", "deputad", "senador", "governador", "presidente lula", "congresso", "camara municipal", "partido", "ministro", "planalto", "votacao", "urna", "tse", "tre ma", "campanha eleitoral", "assembleia legislativa"],
     publicInterest: true,
   },
   seguranca: {
@@ -84,7 +84,7 @@ export const CATEGORIES: Record<CategoryKey, CategoryDef> = {
   },
   servicos_publicos: {
     label: "Serviços públicos",
-    keywords: ["prefeitura", "atendimento", "servico publico", "cadastro", "cadunico", "bolsa familia", "inss", "beneficio", "defesa civil", "coleta de lixo", "lixo", "documento", "rg ", "cras", "procon", "horario de funcionamento", "ponto facultativo", "feriado"],
+    keywords: ["atendimento", "servico publico", "cadastro", "cadunico", "bolsa familia", "inss", "beneficio", "defesa civil", "coleta de lixo", "lixo", "documento", "rg ", "cras", "procon", "horario de funcionamento", "ponto facultativo", "feriado"],
     publicInterest: true,
   },
   oportunidades: {

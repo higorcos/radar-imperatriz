@@ -17,6 +17,8 @@ export interface RankableArticle {
   collected_at: Date;
   mentions_imperatriz: boolean;
   content_kind: string;
+  /** "date" quando a fonte informa só o dia — não entra no critério de atualidade em horas. */
+  published_precision?: "datetime" | "date";
 }
 
 export interface Cluster<T extends RankableArticle> {
@@ -80,7 +82,7 @@ export function rankArticles<T extends RankableArticle>(items: T[], now = Date.n
       reasons.push(`Tema de interesse público: ${categoryLabel(lead.category)}`);
     }
     const age = now - articleTime(lead).getTime();
-    if (age < 6 * HOUR) reasons.push("Publicado nas últimas 6 horas");
+    if (lead.published_precision !== "date" && age < 6 * HOUR) reasons.push("Publicado nas últimas 6 horas");
     if (cluster.items.some((i) => i.mentions_imperatriz)) reasons.push("Menciona Imperatriz ou a região Tocantina");
 
     const times = cluster.items.map((i) => articleTime(i).getTime());

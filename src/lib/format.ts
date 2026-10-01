@@ -22,7 +22,8 @@ export const formatTime = (d: Date | string) => timeFmt.format(new Date(d));
 export function relativeTime(d: Date | string, now = Date.now()): string {
   const diff = now - new Date(d).getTime();
   const min = Math.round(diff / 60000);
-  if (min < 0) return formatDateTime(d);
+  // Datas no futuro só ocorrem com fontes que informam apenas o dia (guardado ao meio-dia): mostramos só a data.
+  if (min < 0) return formatDate(d);
   if (min < 2) return "agora há pouco";
   if (min < 60) return `há ${min} min`;
   const h = Math.round(min / 60);
