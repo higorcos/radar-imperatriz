@@ -1,0 +1,84 @@
+import "server-only";
+import { db } from "../db";
+
+export const OCCURRENCE_STATUSES = ["recebida", "em_apuracao", "confirmada", "descartada", "publicada"] as const;
+export type OccurrenceStatus = (typeof OCCURRENCE_STATUSES)[number];
+
+export const OCCURRENCE_STATUS_LABELS: Record<OccurrenceStatus, string> = {
+  recebida: "Recebida (não verificada)",
+  em_apuracao: "Em apuração",
+  confirmada: "Confirmada",
+  descartada: "Descartada",
+  publicada: "Publicada",
+};
+
+export interface Occurrence {
+  id: string;
+  description: string;
+  location: string | null;
+  occurred_at: Date | null;
+  initial_source: string | null;
+  category: string;
+  status: OccurrenceStatus;
+  notes: string | null;
+  next_actions: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface OccurrenceInput {
+  description: string;
+  location: string | null;
+  occurred_at: Date | null;
+  initial_source: string | null;
+  category: string;
+  status: OccurrenceStatus;
+  notes: string | null;
+  next_actions: string | null;
+}
+
+export async function listOccurrences(status?: OccurrenceStatus): Promise<Occurrence[]> {
+  const sql = db();
+  return sql<Occurrence[]>`
+    select * from occurrences ${status ? sql`where status = ${status}` : sql``}
+    order by case status when 'recebida' then 0 when 'em_apuracao' then 1 when 'confirmada' then 2 else 3 end, created_at desc
+    limit 200
+  `;
+}
+
+export async function getOccurrence(id: string): Promise<Occurrence | null> {
+  const sql = db();
+  const [row] = await sql<Occurrence[]>`select * from occurrences where id = ${id}`;
+  return row ?? null;
+}
+
+export async function createOccurrence(o: OccurrenceInput): Promise<string> {
+  const sql = db();
+  const [row] = await sql<{ id: string }[]>`
+    insert into occurrences (description, location, occurred_at, initial_source, category, status, notes, next_actions)
+    values (${o.description}, ${o.location}, ${o.occurred_at}, ${o.initial_source}, ${o.category}, ${o.status}, ${o.notes}, ${o.next_actions})
+    returning id
+  `;
+  return row.id;
+}
+
+export async function updateOccurrence(id: string, o: OccurrenceInput) {
+  const sql = db();
+  await sql`
+    update occurrences set description = ${o.description}, location = ${o.location}, occurred_at = ${o.occurred_at},
+      initial_source = ${o.initial_source}, category = ${o.category}, status = ${o.status}, notes = ${o.notes},
+      next_actions = ${o.next_actions}, updated_at = now()
+    where id = ${id}
+  `;
+}
+
+export async function deleteOccurrence(id: string) {
+  const sql = db();
+  await sql`delete from occurrences where id = ${id}`;
+}
+
+export async function countOpenOccurrences(): Promise<number> {
+  const sql = db();
+  const [r] = await sql<{ n: number }[]>`select count(*)::int as n from occurrences where status in ('recebida','em_apuracao')`;
+  return r.n;
+}

@@ -1,0 +1,17 @@
+# Banco PostgreSQL apenas para desenvolvimento local.
+# Em produção use o PostgreSQL do Supabase (mesma DATABASE_URL, mesmo schema).
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: radar
+      POSTGRES_PASSWORD: radar_dev_local
+      POSTGRES_DB: radar_imperatriz
+    ports:
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - radar_pgdata:/var/lib/postgresql/data
+
+volumes:
+  radar_pgdata:
