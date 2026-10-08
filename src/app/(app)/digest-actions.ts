@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDb } from "@/lib/cache";
 import { requireSession } from "@/lib/auth";
 import { buildMaterial, imperatrizConnections, nationalDigest, populationImpact } from "@/lib/ai/features";
 import { runAi } from "@/lib/ai/run";
@@ -46,6 +47,7 @@ export async function generateNationalDigest(): Promise<ActionResult> {
   if (!res.ok) return res;
   await saveDigest("resumo_nacional", res.data!.content, collectIds(res.data!.content), res.data!.model);
   await logActivity("gerou", "Resumo nacional do dia (IA)", "/nacionais?aba=resumo");
+  invalidateDb();
   revalidatePath("/nacionais");
   return { ok: true, message: "Resumo nacional atualizado." };
 }
@@ -59,6 +61,7 @@ export async function generateImperatrizConnections(): Promise<ActionResult> {
   if (!res.ok) return res;
   await saveDigest("conexoes_imperatriz", res.data!.content, collectIds(res.data!.content), res.data!.model);
   await logActivity("gerou", "Conexões nacionais com Imperatriz (IA)", "/nacionais?aba=imperatriz");
+  invalidateDb();
   revalidatePath("/nacionais");
   return { ok: true, message: "Hipóteses de conexão geradas." };
 }
@@ -74,6 +77,7 @@ export async function generatePopulationImpact(): Promise<ActionResult> {
   if (!res.ok) return res;
   await saveDigest("pautas_populacao", res.data!.content, collectIds(res.data!.content), res.data!.model);
   await logActivity("gerou", "Pautas que afetam a população (IA)", "/imperatriz");
+  invalidateDb();
   revalidatePath("/imperatriz");
   return { ok: true, message: "Sugestões geradas." };
 }

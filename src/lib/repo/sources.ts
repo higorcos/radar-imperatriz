@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedQuery } from "../cache";
 import { db } from "../db";
 
 export type SourceHealth = "ok" | "instavel" | "falhando" | "desatualizada" | "nunca_consultada" | "sem_integracao" | "desativada";
@@ -45,7 +46,7 @@ export function sourceHealth(s: Source, now = Date.now()): SourceHealth {
   return "ok";
 }
 
-export async function listSources(): Promise<SourceWithHealth[]> {
+async function listSourceRows(): Promise<Source[]> {
   const sql = db();
   const rows = await sql<Source[]>`
     select s.*, coalesce(st.n, 0)::int as article_count, st.latest as latest_article_at
@@ -55,7 +56,14 @@ export async function listSources(): Promise<SourceWithHealth[]> {
     ) st on true
     order by case s.scope when 'local' then 0 when 'estadual' then 1 else 2 end, s.name
   `;
-  return rows.map((s) => ({ ...s, health: sourceHealth(s) }));
+  return rows;
+}
+
+const listSourceRowsCached = cachedQuery(listSourceRows, "sources.listSourceRows");
+
+/** Fontes com o estado da integração calculado na hora (o cache guarda só os dados do banco). */
+export async function listSources(): Promise<SourceWithHealth[]> {
+  return (await listSourceRowsCached()).map((s) => ({ ...s, health: sourceHealth(s) }));
 }
 
 export interface CollectionStatus {
@@ -65,7 +73,7 @@ export interface CollectionStatus {
 }
 
 /** Situação geral da coleta — usada nos avisos de dados desatualizados. */
-export async function collectionStatus(): Promise<CollectionStatus> {
+async function collectionStatusQuery(): Promise<CollectionStatus> {
   const sql = db();
   const [agg] = await sql<{ last: Date | null; active: number }[]>`
     select max(last_success_at) as last, count(*)::int as active
@@ -88,7 +96,7 @@ export interface CollectionRun {
   error: string | null;
 }
 
-export async function recentRuns(limit = 30): Promise<CollectionRun[]> {
+async function recentRunsQuery(limit = 30): Promise<CollectionRun[]> {
   const sql = db();
   return sql<CollectionRun[]>`
     select r.id, s.name as source_name, r.started_at, r.status, r.items_found, r.items_new, r.error
@@ -96,3 +104,7 @@ export async function recentRuns(limit = 30): Promise<CollectionRun[]> {
     order by r.started_at desc limit ${limit}
   `;
 }
+
+// Leituras com cache (invalidado a cada gravação — ver src/lib/cache.ts).
+export const collectionStatus = cachedQuery(collectionStatusQuery, "sources.collectionStatus");
+export const recentRuns = cachedQuery(recentRunsQuery, "sources.recentRuns");

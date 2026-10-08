@@ -121,6 +121,12 @@ Vercel (ou qualquer host Node.js) com as variáveis de ambiente acima. As págin
 
 As chamadas ficam em `src/lib/ai/`. Cada recurso envia ao modelo apenas título, trecho, fonte e data das notícias selecionadas, com referências curtas (N1, N2…). A resposta é validada por schema; **referências que não existem no material são descartadas**, então a interface só mostra fontes reais. O prompt de sistema (`src/lib/ai/prompts.ts`) proíbe inventar fatos, nomes ou fontes, exige tratar relatos não verificados e conexões locais como hipóteses e veta o sensacionalismo. O fallback automático do servidor em caso de recusa (`fallbacks: "default"`) está ativado.
 
+## Cache
+
+As leituras do banco ficam em cache (`src/lib/cache.ts`) até a próxima gravação: toda server action que grava (salvar, pautas, ocorrências, calendário, rascunhos, fontes, IA, "Atualizar agora") invalida o cache na hora, e a coleta agendada (`/api/cron/collect`) também. Assim as páginas quase não consultam o banco entre uma alteração e outra, e nunca mostram dado velho depois de uma ação feita no site.
+
+Gravações feitas **por fora do site** (SQL Editor do Supabase, `npm run collect` ou `npm run reclassify` no terminal) não invalidam o cache: elas aparecem em até 1 hora (validade de segurança) ou logo após a próxima ação feita no site.
+
 ## Estrutura
 
 ```

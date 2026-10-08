@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDb } from "@/lib/cache";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth";
 import { buildMaterial, generateContent } from "@/lib/ai/features";
@@ -78,6 +79,7 @@ export async function saveDraftAction(input: z.input<typeof DraftInput>): Promis
     ai_generated: d.aiGenerated,
   });
   await logActivity("salvou", `Rascunho: ${d.title}`, `/conteudo?rascunho=${id}`);
+  invalidateDb();
   revalidatePath("/conteudo");
   return { ok: true, message: "Rascunho salvo.", data: { id } };
 }
@@ -104,6 +106,7 @@ export async function scheduleDraftAction(input: z.input<typeof ScheduleInput>):
     notes: null,
   });
   await logActivity("agendou", `Publicação agendada: ${draft.title}`, "/calendario");
+  invalidateDb();
   revalidatePath("/calendario");
   return { ok: true, message: "Enviado ao calendário editorial (status: em revisão)." };
 }
@@ -113,6 +116,7 @@ export async function deleteDraftAction(id: string): Promise<ActionResult> {
   const parsed = uuid.safeParse(id);
   if (!parsed.success) return { ok: false, error: "Rascunho inválido." };
   await deleteDraft(parsed.data);
+  invalidateDb();
   revalidatePath("/conteudo");
   return { ok: true, message: "Rascunho excluído." };
 }

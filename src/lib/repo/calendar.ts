@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedQuery } from "../cache";
 import { db } from "../db";
 import type { ProductionStatus } from "./pautas";
 
@@ -24,19 +25,19 @@ export interface CalendarItem {
   created_at: Date;
 }
 
-export async function listCalendar(from: Date, to: Date): Promise<CalendarItem[]> {
+async function listCalendarQuery(from: Date, to: Date): Promise<CalendarItem[]> {
   const sql = db();
   return sql<CalendarItem[]>`
     select * from calendar_items where starts_at >= ${from} and starts_at < ${to} order by starts_at
   `;
 }
 
-export async function listCalendarAll(limit = 300): Promise<CalendarItem[]> {
+async function listCalendarAllQuery(limit = 300): Promise<CalendarItem[]> {
   const sql = db();
   return sql<CalendarItem[]>`select * from calendar_items order by starts_at desc limit ${limit}`;
 }
 
-export async function upcomingCalendar(days = 7, limit = 8): Promise<CalendarItem[]> {
+async function upcomingCalendarQuery(days = 7, limit = 8): Promise<CalendarItem[]> {
   const sql = db();
   return sql<CalendarItem[]>`
     select * from calendar_items
@@ -45,7 +46,7 @@ export async function upcomingCalendar(days = 7, limit = 8): Promise<CalendarIte
   `;
 }
 
-export async function inProduction(limit = 6): Promise<CalendarItem[]> {
+async function inProductionQuery(limit = 6): Promise<CalendarItem[]> {
   const sql = db();
   return sql<CalendarItem[]>`
     select * from calendar_items where status in ('em_apuracao','em_producao','em_revisao','pronto')
@@ -80,3 +81,9 @@ export async function deleteCalendarItem(id: string) {
   const sql = db();
   await sql`delete from calendar_items where id = ${id}`;
 }
+
+// Leituras com cache (invalidado a cada gravação — ver src/lib/cache.ts).
+export const listCalendar = cachedQuery(listCalendarQuery, "calendar.listCalendar");
+export const listCalendarAll = cachedQuery(listCalendarAllQuery, "calendar.listCalendarAll");
+export const upcomingCalendar = cachedQuery(upcomingCalendarQuery, "calendar.upcomingCalendar");
+export const inProduction = cachedQuery(inProductionQuery, "calendar.inProduction");

@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedQuery } from "../cache";
 import { db } from "../db";
 
 export interface Draft {
@@ -14,12 +15,12 @@ export interface Draft {
   updated_at: Date;
 }
 
-export async function listDrafts(limit = 30): Promise<Draft[]> {
+async function listDraftsQuery(limit = 30): Promise<Draft[]> {
   const sql = db();
   return sql<Draft[]>`select * from content_drafts order by updated_at desc limit ${limit}`;
 }
 
-export async function getDraft(id: string): Promise<Draft | null> {
+async function getDraftQuery(id: string): Promise<Draft | null> {
   const sql = db();
   const [row] = await sql<Draft[]>`select * from content_drafts where id = ${id}`;
   return row ?? null;
@@ -55,3 +56,7 @@ export async function deleteDraft(id: string) {
   const sql = db();
   await sql`delete from content_drafts where id = ${id}`;
 }
+
+// Leituras com cache (invalidado a cada gravação — ver src/lib/cache.ts).
+export const listDrafts = cachedQuery(listDraftsQuery, "drafts.listDrafts");
+export const getDraft = cachedQuery(getDraftQuery, "drafts.getDraft");

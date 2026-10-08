@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDb } from "@/lib/cache";
 import { requireSession } from "@/lib/auth";
 import { collectFeeds } from "@/lib/collector/collect";
 import { db } from "@/lib/db";
@@ -15,6 +16,7 @@ export async function toggleSaveArticle(articleId: string): Promise<ActionResult
   const result = await toggleSavedArticle(id.data);
   if (!result) return { ok: false, error: "Notícia não encontrada." };
   if (result.saved) await logActivity("salvou", result.title, "/salvos");
+  invalidateDb();
   revalidatePath("/", "layout");
   return { ok: true, message: result.saved ? "Notícia salva." : "Removida das salvas.", data: { saved: result.saved } };
 }
@@ -27,6 +29,7 @@ export async function refreshCollection(): Promise<ActionResult> {
     const newItems = summary.results.reduce((n, r) => n + r.inserted, 0);
     const failed = summary.results.filter((r) => r.status === "erro");
     await logActivity("coletou", `Coleta manual: ${newItems} notícia(s) nova(s)`, "/fontes");
+    invalidateDb();
     revalidatePath("/", "layout");
     const base = `${newItems} notícia(s) nova(s) de ${summary.results.length} fonte(s).`;
     return failed.length > 0

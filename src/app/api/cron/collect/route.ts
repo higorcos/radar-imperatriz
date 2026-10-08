@@ -1,5 +1,6 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
+import { invalidateDbFromRoute } from "@/lib/cache";
 import { collectFeeds } from "@/lib/collector/collect";
 import { db } from "@/lib/db";
 
@@ -23,6 +24,7 @@ function authorized(req: NextRequest): boolean {
 async function handle(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   const summary = await collectFeeds(db());
+  invalidateDbFromRoute();
   return NextResponse.json({
     startedAt: summary.startedAt,
     finishedAt: summary.finishedAt,

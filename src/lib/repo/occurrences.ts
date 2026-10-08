@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedQuery } from "../cache";
 import { db } from "../db";
 
 export const OCCURRENCE_STATUSES = ["recebida", "em_apuracao", "confirmada", "descartada", "publicada"] as const;
@@ -37,7 +38,7 @@ export interface OccurrenceInput {
   next_actions: string | null;
 }
 
-export async function listOccurrences(status?: OccurrenceStatus): Promise<Occurrence[]> {
+async function listOccurrencesQuery(status?: OccurrenceStatus): Promise<Occurrence[]> {
   const sql = db();
   return sql<Occurrence[]>`
     select * from occurrences ${status ? sql`where status = ${status}` : sql``}
@@ -46,7 +47,7 @@ export async function listOccurrences(status?: OccurrenceStatus): Promise<Occurr
   `;
 }
 
-export async function getOccurrence(id: string): Promise<Occurrence | null> {
+async function getOccurrenceQuery(id: string): Promise<Occurrence | null> {
   const sql = db();
   const [row] = await sql<Occurrence[]>`select * from occurrences where id = ${id}`;
   return row ?? null;
@@ -77,13 +78,13 @@ export async function deleteOccurrence(id: string) {
   await sql`delete from occurrences where id = ${id}`;
 }
 
-export async function countOpenOccurrences(): Promise<number> {
+async function countOpenOccurrencesQuery(): Promise<number> {
   const sql = db();
   const [r] = await sql<{ n: number }[]>`select count(*)::int as n from occurrences where status in ('recebida','em_apuracao')`;
   return r.n;
 }
 
-export async function searchOccurrences(q: string, limit = 20): Promise<Occurrence[]> {
+async function searchOccurrencesQuery(q: string, limit = 20): Promise<Occurrence[]> {
   const sql = db();
   const like = `%${q}%`;
   return sql<Occurrence[]>`
@@ -92,3 +93,9 @@ export async function searchOccurrences(q: string, limit = 20): Promise<Occurren
     order by created_at desc limit ${limit}
   `;
 }
+
+// Leituras com cache (invalidado a cada gravação — ver src/lib/cache.ts).
+export const listOccurrences = cachedQuery(listOccurrencesQuery, "occurrences.listOccurrences");
+export const getOccurrence = cachedQuery(getOccurrenceQuery, "occurrences.getOccurrence");
+export const countOpenOccurrences = cachedQuery(countOpenOccurrencesQuery, "occurrences.countOpenOccurrences");
+export const searchOccurrences = cachedQuery(searchOccurrencesQuery, "occurrences.searchOccurrences");

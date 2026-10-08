@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDb } from "@/lib/cache";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth";
 import { firstIssue, optionalText, uuid, type ActionResult } from "@/lib/action-result";
@@ -25,6 +26,7 @@ export async function createCalendarAction(_prev: ActionResult, fd: FormData): P
   const d = parsed.data;
   await createCalendarItem({ title: d.title, kind: d.kind, starts_at: fromLocalInput(d.date, d.time), status: d.status, pauta_id: null, draft_id: null, notes: d.notes });
   await logActivity("agendou", d.title, "/calendario");
+  invalidateDb();
   revalidatePath("/calendario");
   return { ok: true, message: "Adicionado ao calendário." };
 }
@@ -35,6 +37,7 @@ export async function setCalendarStatusAction(id: string, status: string): Promi
   const st = z.enum(PRODUCTION_STATUSES).safeParse(status);
   if (!pid.success || !st.success) return { ok: false, error: "Dados inválidos." };
   await setCalendarStatus(pid.data, st.data);
+  invalidateDb();
   revalidatePath("/calendario");
   return { ok: true, message: "Status atualizado." };
 }
@@ -44,6 +47,7 @@ export async function deleteCalendarAction(id: string): Promise<ActionResult> {
   const pid = uuid.safeParse(id);
   if (!pid.success) return { ok: false, error: "Dados inválidos." };
   await deleteCalendarItem(pid.data);
+  invalidateDb();
   revalidatePath("/calendario");
   return { ok: true, message: "Item removido." };
 }

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDb } from "@/lib/cache";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth";
 import { isCategoryKey } from "@/lib/categories";
@@ -86,6 +87,7 @@ export async function createSourceAction(_prev: ActionResult, fd: FormData): Pro
             ${s.method}, ${s.method === "pagina_html" ? s.link_pattern : null}, ${s.frequency_minutes}, true, false, ${s.notes})
   `;
   await logActivity("cadastrou", `Fonte: ${s.name}`, "/fontes");
+  invalidateDb();
   revalidatePath("/fontes");
   return { ok: true, message: automatic ? "Fonte cadastrada e leitura validada." : "Fonte cadastrada." };
 }
@@ -96,6 +98,7 @@ export async function toggleSourceAction(id: string): Promise<ActionResult> {
   if (!pid.success) return { ok: false, error: "Fonte inválida." };
   const [row] = await db()<{ enabled: boolean }[]>`update sources set enabled = not enabled where id = ${pid.data} returning enabled`;
   if (!row) return { ok: false, error: "Fonte não encontrada." };
+  invalidateDb();
   revalidatePath("/fontes");
   return { ok: true, message: row.enabled ? "Fonte ativada." : "Fonte desativada." };
 }
@@ -106,6 +109,7 @@ export async function testSourceAction(id: string): Promise<ActionResult> {
   if (!pid.success) return { ok: false, error: "Fonte inválida." };
   const summary = await collectFeeds(db(), { sourceId: pid.data });
   const r = summary.results[0];
+  invalidateDb();
   revalidatePath("/fontes");
   if (!r) return { ok: false, error: "Esta fonte não tem coleta automática configurada." };
   if (r.status === "erro") return { ok: false, error: `Falha: ${r.error}` };
@@ -117,6 +121,7 @@ export async function deleteSourceAction(id: string): Promise<ActionResult> {
   const pid = uuid.safeParse(id);
   if (!pid.success) return { ok: false, error: "Fonte inválida." };
   await db()`delete from sources where id = ${pid.data}`;
+  invalidateDb();
   revalidatePath("/fontes");
   return { ok: true, message: "Fonte e notícias associadas removidas." };
 }

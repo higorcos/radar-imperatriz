@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedQuery } from "../cache";
 import { db } from "../db";
 
 export const SAVED_KINDS = ["noticia", "pauta", "fonte", "ideia", "rascunho", "entrevista"] as const;
@@ -27,7 +28,7 @@ export interface SavedItem {
   published_at: Date | null;
 }
 
-export async function listSaved(f: { kind?: SavedKind; tag?: string; q?: string }): Promise<SavedItem[]> {
+async function listSavedQuery(f: { kind?: SavedKind; tag?: string; q?: string }): Promise<SavedItem[]> {
   const sql = db();
   return sql<SavedItem[]>`
     select si.*, s.name as source_name, a.scope, a.published_at
@@ -43,13 +44,13 @@ export async function listSaved(f: { kind?: SavedKind; tag?: string; q?: string 
   `;
 }
 
-export async function allTags(): Promise<string[]> {
+async function allTagsQuery(): Promise<string[]> {
   const sql = db();
   const rows = await sql<{ tag: string }[]>`select distinct unnest(tags) as tag from saved_items order by 1`;
   return rows.map((r) => r.tag);
 }
 
-export async function countSaved(): Promise<number> {
+async function countSavedQuery(): Promise<number> {
   const sql = db();
   const [r] = await sql<{ n: number }[]>`select count(*)::int as n from saved_items`;
   return r.n;
@@ -86,10 +87,16 @@ export async function deleteSaved(id: string) {
   await sql`delete from saved_items where id = ${id}`;
 }
 
-export async function getSaved(id: string): Promise<SavedItem | null> {
+async function getSavedQuery(id: string): Promise<SavedItem | null> {
   const sql = db();
   const [row] = await sql<SavedItem[]>`
     select si.*, null as source_name, null as scope, null as published_at from saved_items si where id = ${id}
   `;
   return row ?? null;
 }
+
+// Leituras com cache (invalidado a cada gravação — ver src/lib/cache.ts).
+export const listSaved = cachedQuery(listSavedQuery, "saved.listSaved");
+export const allTags = cachedQuery(allTagsQuery, "saved.allTags");
+export const countSaved = cachedQuery(countSavedQuery, "saved.countSaved");
+export const getSaved = cachedQuery(getSavedQuery, "saved.getSaved");

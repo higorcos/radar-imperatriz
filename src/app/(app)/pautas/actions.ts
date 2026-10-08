@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDb } from "@/lib/cache";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth";
 import { buildMaterial, suggestPautas, type ResolvedPauta } from "@/lib/ai/features";
@@ -120,6 +121,7 @@ export async function savePautaAction(input: z.input<typeof SuggestionInput>): P
     article_ids: existing,
   });
   await logActivity("criou", `Pauta salva: ${titulo_provisorio}`, `/pautas?ver=${id}`);
+  invalidateDb();
   revalidatePath("/pautas");
   return { ok: true, message: "Pauta salva.", data: { id } };
 }
@@ -135,6 +137,7 @@ export async function createManualPautaAction(_prev: ActionResult, fd: FormData)
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
   const id = await createPauta({ ...parsed.data, details: {}, origin: "manual", origin_label: null, article_ids: [] });
   await logActivity("criou", `Pauta manual: ${parsed.data.title}`, `/pautas?ver=${id}`);
+  invalidateDb();
   revalidatePath("/pautas");
   return { ok: true, message: "Pauta criada." };
 }
@@ -147,6 +150,7 @@ export async function setPautaStatusAction(id: string, status: string): Promise<
   const st = StatusInput.safeParse(status);
   if (!pid.success || !st.success) return { ok: false, error: "Dados inválidos." };
   await setPautaStatus(pid.data, st.data);
+  invalidateDb();
   revalidatePath("/pautas");
   return { ok: true, message: "Status atualizado." };
 }
@@ -156,6 +160,7 @@ export async function deletePautaAction(id: string): Promise<ActionResult> {
   const pid = uuid.safeParse(id);
   if (!pid.success) return { ok: false, error: "Pauta inválida." };
   await deletePauta(pid.data);
+  invalidateDb();
   revalidatePath("/pautas");
   return { ok: true, message: "Pauta excluída." };
 }
@@ -184,6 +189,7 @@ export async function schedulePautaAction(input: z.input<typeof ScheduleInput>):
     notes: null,
   });
   await logActivity("agendou", `Agendou: ${pauta.title}`, "/calendario");
+  invalidateDb();
   revalidatePath("/calendario");
   return { ok: true, message: "Adicionado ao calendário." };
 }

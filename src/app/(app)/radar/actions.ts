@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDb } from "@/lib/cache";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth";
 import { isCategoryKey } from "@/lib/categories";
@@ -55,6 +56,7 @@ export async function saveOccurrenceAction(_prev: ActionResult, fd: FormData): P
     await createOccurrence(input);
     await logActivity("registrou", `Ocorrência: ${input.description.slice(0, 80)}`, "/radar");
   }
+  invalidateDb();
   revalidatePath("/radar");
   return { ok: true, message: parsed.data.id ? "Ocorrência atualizada." : "Ocorrência registrada como recebida." };
 }
@@ -67,6 +69,7 @@ export async function setOccurrenceStatusAction(id: string, status: string): Pro
   const occ = await getOccurrence(pid.data);
   if (!occ) return { ok: false, error: "Ocorrência não encontrada." };
   await updateOccurrence(pid.data, { ...occ, status: st.data });
+  invalidateDb();
   revalidatePath("/radar");
   return { ok: true, message: "Status atualizado." };
 }
@@ -76,6 +79,7 @@ export async function deleteOccurrenceAction(id: string): Promise<ActionResult> 
   const pid = uuid.safeParse(id);
   if (!pid.success) return { ok: false, error: "Dados inválidos." };
   await deleteOccurrence(pid.data);
+  invalidateDb();
   revalidatePath("/radar");
   return { ok: true, message: "Ocorrência excluída." };
 }

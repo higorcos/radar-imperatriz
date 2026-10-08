@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { invalidateDb } from "@/lib/cache";
 import { z } from "zod";
 import { requireSession } from "@/lib/auth";
 import { firstIssue, optionalText, tagsField, uuid, type ActionResult } from "@/lib/action-result";
@@ -28,6 +29,7 @@ export async function createSavedAction(_prev: ActionResult, fd: FormData): Prom
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
   await createSaved(parsed.data);
   await logActivity("salvou", parsed.data.title, "/salvos");
+  invalidateDb();
   revalidatePath("/salvos");
   return { ok: true, message: "Item salvo na biblioteca." };
 }
@@ -39,6 +41,7 @@ export async function updateSavedAction(_prev: ActionResult, fd: FormData): Prom
   const parsed = Update.safeParse(Object.fromEntries([...fd.entries()].filter(([, v]) => typeof v === "string")));
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
   await updateSaved(parsed.data.id, { notes: parsed.data.notes, tags: parsed.data.tags });
+  invalidateDb();
   revalidatePath("/salvos");
   return { ok: true, message: "Atualizado." };
 }
@@ -48,6 +51,7 @@ export async function deleteSavedAction(id: string): Promise<ActionResult> {
   const pid = uuid.safeParse(id);
   if (!pid.success) return { ok: false, error: "Item inválido." };
   await deleteSaved(pid.data);
+  invalidateDb();
   revalidatePath("/salvos");
   return { ok: true, message: "Removido da biblioteca." };
 }

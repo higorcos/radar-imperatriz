@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedQuery } from "../cache";
 import { db } from "../db";
 import type { PautaDetails } from "../ai/schemas";
 
@@ -29,7 +30,7 @@ export interface Pauta {
   updated_at: Date;
 }
 
-export async function listPautas(f: { status?: PautaStatus; limit?: number } = {}): Promise<Pauta[]> {
+async function listPautasQuery(f: { status?: PautaStatus; limit?: number } = {}): Promise<Pauta[]> {
   const sql = db();
   return sql<Pauta[]>`
     select * from pautas
@@ -38,14 +39,14 @@ export async function listPautas(f: { status?: PautaStatus; limit?: number } = {
   `;
 }
 
-export async function getPauta(id: string): Promise<Pauta | null> {
+async function getPautaQuery(id: string): Promise<Pauta | null> {
   const sql = db();
   const [row] = await sql<Pauta[]>`select * from pautas where id = ${id}`;
   return row ?? null;
 }
 
 /** Títulos já cadastrados — enviados à IA para evitar sugestões repetidas. */
-export async function existingPautaTitles(limit = 60): Promise<string[]> {
+async function existingPautaTitlesQuery(limit = 60): Promise<string[]> {
   const sql = db();
   const rows = await sql<{ title: string }[]>`select title from pautas order by created_at desc limit ${limit}`;
   return rows.map((r) => r.title);
@@ -78,7 +79,7 @@ export async function deletePauta(id: string) {
   await sql`delete from pautas where id = ${id}`;
 }
 
-export async function countPautasInProgress(): Promise<number> {
+async function countPautasInProgressQuery(): Promise<number> {
   const sql = db();
   const [r] = await sql<{ n: number }[]>`
     select count(*)::int as n from pautas where status in ('em_apuracao','em_producao','em_revisao','pronto')
@@ -86,10 +87,17 @@ export async function countPautasInProgress(): Promise<number> {
   return r.n;
 }
 
-export async function searchPautas(q: string, limit = 20): Promise<Pauta[]> {
+async function searchPautasQuery(q: string, limit = 20): Promise<Pauta[]> {
   const sql = db();
   const like = `%${q}%`;
   return sql<Pauta[]>`
     select * from pautas where title ilike ${like} or summary ilike ${like} order by created_at desc limit ${limit}
   `;
 }
+
+// Leituras com cache (invalidado a cada gravação — ver src/lib/cache.ts).
+export const listPautas = cachedQuery(listPautasQuery, "pautas.listPautas");
+export const getPauta = cachedQuery(getPautaQuery, "pautas.getPauta");
+export const existingPautaTitles = cachedQuery(existingPautaTitlesQuery, "pautas.existingPautaTitles");
+export const countPautasInProgress = cachedQuery(countPautasInProgressQuery, "pautas.countPautasInProgress");
+export const searchPautas = cachedQuery(searchPautasQuery, "pautas.searchPautas");

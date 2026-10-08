@@ -1,4 +1,5 @@
 import "server-only";
+import { cachedQuery } from "../cache";
 import { db } from "../db";
 import type { RankableArticle } from "../relevance";
 
@@ -25,7 +26,7 @@ export interface ArticleFilters {
   offset?: number;
 }
 
-export async function listArticles(f: ArticleFilters): Promise<Article[]> {
+async function listArticlesQuery(f: ArticleFilters): Promise<Article[]> {
   const sql = db();
   const limit = Math.min(f.limit ?? 30, 200);
   return sql<Article[]>`
@@ -45,7 +46,7 @@ export async function listArticles(f: ArticleFilters): Promise<Article[]> {
   `;
 }
 
-export async function countArticles(f: Omit<ArticleFilters, "limit" | "offset">): Promise<number> {
+async function countArticlesQuery(f: Omit<ArticleFilters, "limit" | "offset">): Promise<number> {
   const sql = db();
   const [row] = await sql<{ n: number }[]>`
     select count(*)::int as n from articles a
@@ -58,7 +59,7 @@ export async function countArticles(f: Omit<ArticleFilters, "limit" | "offset">)
   return row.n;
 }
 
-export async function getArticlesByIds(ids: string[]): Promise<Article[]> {
+async function getArticlesByIdsQuery(ids: string[]): Promise<Article[]> {
   if (ids.length === 0) return [];
   const sql = db();
   return sql<Article[]>`
@@ -72,14 +73,14 @@ export async function getArticlesByIds(ids: string[]): Promise<Article[]> {
   `;
 }
 
-export async function articleExists(id: string): Promise<boolean> {
+async function articleExistsQuery(id: string): Promise<boolean> {
   const sql = db();
   const [row] = await sql`select 1 from articles where id = ${id}`;
   return Boolean(row);
 }
 
 /** Fontes que já têm notícias no escopo (para o filtro "Fonte"). */
-export async function sourcesWithArticles(scopes: Scope[]): Promise<{ id: string; name: string }[]> {
+async function sourcesWithArticlesQuery(scopes: Scope[]): Promise<{ id: string; name: string }[]> {
   const sql = db();
   return sql`
     select distinct s.id, s.name from sources s join articles a on a.source_id = s.id
@@ -87,7 +88,7 @@ export async function sourcesWithArticles(scopes: Scope[]): Promise<{ id: string
   `;
 }
 
-export async function articleStats(): Promise<{ local24: number; national24: number; total: number }> {
+async function articleStatsQuery(): Promise<{ local24: number; national24: number; total: number }> {
   const sql = db();
   const [row] = await sql<{ local24: number; national24: number; total: number }[]>`
     select
@@ -98,3 +99,11 @@ export async function articleStats(): Promise<{ local24: number; national24: num
   `;
   return row;
 }
+
+// Leituras com cache (invalidado a cada gravação — ver src/lib/cache.ts).
+export const listArticles = cachedQuery(listArticlesQuery, "articles.listArticles");
+export const countArticles = cachedQuery(countArticlesQuery, "articles.countArticles");
+export const getArticlesByIds = cachedQuery(getArticlesByIdsQuery, "articles.getArticlesByIds");
+export const articleExists = cachedQuery(articleExistsQuery, "articles.articleExists");
+export const sourcesWithArticles = cachedQuery(sourcesWithArticlesQuery, "articles.sourcesWithArticles");
+export const articleStats = cachedQuery(articleStatsQuery, "articles.articleStats");
