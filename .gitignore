@@ -42,3 +42,4 @@ next-env.d.ts
 
 # exemplo de configuração (sem segredos) pode ser versionado
 !.env.example
+supabase-setup.sql
