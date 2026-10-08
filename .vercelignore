@@ -1,0 +1,6 @@
+# Nunca enviar segredos nem arquivos locais no deploy
+.env*
+!.env.example
+supabase-setup.sql
+tests/
+.claude/
