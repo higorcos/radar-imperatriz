@@ -4,6 +4,10 @@ import { Toaster } from "@/components/toaster";
 import { Topbar } from "@/components/topbar";
 import { requireSession } from "@/lib/auth";
 
+// O botão "Atualizar agora" (topo de todas as páginas) coleta todas as fontes numa server action;
+// a coleta completa leva ~15 s. Páginas com IA definem um limite maior.
+export const maxDuration = 60;
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await requireSession();
   return (

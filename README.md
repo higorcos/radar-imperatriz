@@ -91,7 +91,8 @@ Cada consulta usa requisição condicional (ETag/Last-Modified), timeout de 20 s
 
 Chame `GET /api/cron/collect` com o cabeçalho `Authorization: Bearer <CRON_SECRET>`. A rota consulta apenas as fontes cuja frequência venceu.
 
-- **Vercel:** `vercel.json` já agenda uma execução diária (limite do plano Hobby). No plano Pro, aumente a frequência (ex.: `0 * * * *`).
+- **GitHub Actions (grátis):** `.github/workflows/coleta.yml` chama a rota a cada hora. Defina os secrets `APP_URL` e `CRON_SECRET` no repositório.
+- **Vercel:** `vercel.json` agenda uma execução diária (limite do plano Hobby), como reserva.
 - **Servidor próprio (crontab):**
   ```
   */30 * * * * curl -fsS -H "Authorization: Bearer $CRON_SECRET" https://SEU-DOMINIO/api/cron/collect > /dev/null
@@ -102,8 +103,14 @@ O botão **Atualizar agora** força a consulta de todas as fontes ativas.
 
 ### Supabase (produção)
 
-1. Crie um projeto no Supabase e copie a *connection string* (Project Settings → Database → **Session pooler**).
-2. Defina `DATABASE_URL` com ela e rode `npm run db:migrate && npm run db:seed` apontando para o Supabase.
+1. Crie um projeto no Supabase. Em **Connect** há duas *connection strings* que importam:
+   - **Session pooler** (porta 5432): use para rodar as migrações e o seed a partir do seu computador:
+     ```bash
+     DATABASE_URL="<session pooler>" npx tsx scripts/migrate.ts
+     DATABASE_URL="<session pooler>" npx tsx scripts/seed.ts
+     ```
+   - **Transaction pooler** (porta 6543): use como `DATABASE_URL` na Vercel (indicado para funções serverless).
+2. Opcional: rode uma primeira coleta com `DATABASE_URL="<session pooler>" npx tsx scripts/collect.ts --force`.
 3. As tabelas ficam com **RLS ativado e sem políticas**: a API pública do Supabase (anon/authenticated) não acessa nada; só o servidor da aplicação, pela conexão direta.
 
 ### Hospedagem
