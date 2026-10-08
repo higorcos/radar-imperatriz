@@ -8,6 +8,10 @@ import { requireSession } from "@/lib/auth";
 // a coleta completa leva ~15 s. Páginas com IA definem um limite maior.
 export const maxDuration = 60;
 
+// Páginas autenticadas e com dados do banco: sempre renderizadas por requisição, nunca no build
+// (no build, a tentativa de pré-gerar "/" e "/radar" travava consultando o banco).
+export const dynamic = "force-dynamic";
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await requireSession();
   return (
